@@ -60,8 +60,45 @@ public class Triangle extends Surface {
    */
   public boolean intersect(IntersectionRecord outRecord, Ray rayIn) {
     // TODO#A2: fill in this function.
-	  
-	return false;
+    Vector3d vA = owner.getPosition(index.x).clone();
+    
+    double g = rayIn.direction.x;
+    double h = rayIn.direction.y;
+    double i = rayIn.direction.z;
+    double j = vA.x - rayIn.origin.x; 
+    double k = vA.y - rayIn.origin.y;
+    double l = vA.z - rayIn.origin.z;
+    
+    
+    double m = a*(e*i - h*f) + b*(g*f - d*i) + c*(d*h - e*g);
+    
+    double t = -(f*(a*k - j*b) + e*(j*c - a*l) + d*(b*l - k*c))/m;
+    if (t > rayIn.end || t < rayIn.start) return false;
+    
+    double beta = (j*(e*i - h*f) + k*(g*f - d*i) + l*(d*h - e*g))/m;
+    double gamma = (i*(a*k - j*b) + h*(j*c - a*l) + g*(b*l - k*c))/m;
+
+    if (beta > 0 && gamma > 0 && (beta + gamma) < 1) {
+      Vector3d intersect = new Vector3d(rayIn.direction).mul(t).add(rayIn.origin);
+      outRecord.location.set(intersect);
+      
+      if (norm != null) {
+        outRecord.normal.set(norm.normalize());
+      } else {
+        Vector3d nA = owner.getNormal(index.x).clone();
+        Vector3d nB = owner.getNormal(index.y).clone();
+        Vector3d nC = owner.getNormal(index.z).clone();
+        
+        nA.mul(1 - beta - gamma);
+        nB.mul(beta);
+        nC.mul(gamma);
+        outRecord.normal.set(nA.add(nB.add(nC)).normalize());
+      }   
+      outRecord.t = t;
+      outRecord.surface = this;
+      return true;
+    } 
+    return false;
   }
 
   /**

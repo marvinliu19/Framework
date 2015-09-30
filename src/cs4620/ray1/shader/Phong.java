@@ -1,10 +1,12 @@
 package cs4620.ray1.shader;
 
 import cs4620.ray1.IntersectionRecord;
+import cs4620.ray1.Light;
 import cs4620.ray1.Ray;
 import cs4620.ray1.Scene;
 import egl.math.Color;
 import egl.math.Colord;
+import egl.math.Vector3d;
 
 /**
  * A Phong material.
@@ -56,6 +58,28 @@ public class Phong extends Shader {
 		//    the intersection point from the light's position.
 		// 4) Compute the color of the point using the Phong shading model. Add this value
 		//    to the output.
+		outIntensity.setZero();
+		Vector3d v = ray.origin.clone().sub(record.location).normalize();
+		
+		for (Light light : scene.getLights()) {
+			
+			if (!isShadowed(scene, light, record, new Ray())) {
+				
+				Vector3d l = light.position.clone().sub(record.location).normalize();
+				double r2 = light.position.distSq(record.location);
+				
+				Vector3d h = v.add(l).normalize();
+				
+				double diffProp = Math.max(0, record.normal.dot(l));				
+				double specProp = Math.pow(Math.max(0, record.normal.dot(h)), exponent);
+				
+				Colord color = new Colord();
+				color.set(diffuseColor.clone().mul(diffProp).addMultiple(specProp, specularColor.clone()).mul(light.intensity).div(r2));
+			
+				outIntensity.add(color);
+				
+			}
+		}
 		
 	}
 

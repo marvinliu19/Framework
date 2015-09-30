@@ -39,6 +39,10 @@ public class PerspectiveCamera extends Camera {
         // TODO#A2: Fill in this function.
         // 1) Set basisU, basisV, basisW to be the 3 basis vectors,
         // based on viewDir and viewUp
+        basisW.set(this.viewDir).negate().normalize();
+        basisU.set(this.viewUp).cross(basisW).normalize();
+        basisV.set(basisW).cross(basisU).normalize();
+        centerDir.set(this.viewDir).normalize().mul(projDistance);
         
         initialized = true;
     }
@@ -55,10 +59,25 @@ public class PerspectiveCamera extends Camera {
         // 1) If the view is not yet initialized, initialize it.
         // 2) Transform inU so that it lies between [-viewWidth / 2, +viewWidth / 2] 
         //    instead of [0, 1]. Similarly, transform inV so that its range is
-        //    [-vieHeight / 2, +viewHeight / 2]
+        //    [-viewHeight / 2, +viewHeight / 2]        
         // 3) Set the origin field of outRay for a perspective camera.
-        // 4) Set the direction field of outRay for an orthographic camera. This
+        // 4) Set the direction field of outRay for an perspective camera. This
         //    should depend on your transformed inU and inV and basisU and basisV,
         //    as well as the projection distance.
+        if (!initialized) initView();
+        
+        Vector3d tempBasisU = new Vector3d(basisU);
+        tempBasisU.mul(inU*this.viewWidth - this.viewWidth/2);
+        
+        Vector3d tempBasisV = new Vector3d(basisV);
+        tempBasisV.mul(inV*this.viewHeight - this.viewHeight/2);
+        
+        Vector3d d = new Vector3d(centerDir);
+        
+        d.add(tempBasisU.add(tempBasisV)).normalize();
+        
+        outRay.set(this.viewPoint, d);
+        
+        outRay.makeOffsetRay();
     }
 }

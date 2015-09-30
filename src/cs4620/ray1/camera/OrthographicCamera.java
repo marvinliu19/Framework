@@ -24,7 +24,10 @@ public class OrthographicCamera extends Camera {
         // TODO#A2: Fill in this function.
         // 1) Set basisU, basisV, basisW to be the 3 basis vectors, 
         //    based on viewDir and viewUp
-      
+        basisW.set(this.viewDir).negate().normalize();
+        basisU.set(this.viewUp).cross(basisW).normalize();
+        basisV.set(basisW).cross(basisU).normalize();
+        
         initialized = true;
     }
 
@@ -38,13 +41,26 @@ public class OrthographicCamera extends Camera {
     public void getRay(Ray outRay, double inU, double inV) {
         // TODO#A2: Fill in this function.
         // 1) If the view is not yet initialized, initialize it.
+        if (!initialized) 
+            initView();
+        
         // 2) Transform inU so that it lies between [-viewWidth / 2, +viewWidth / 2] 
         //    instead of [0, 1]. Similarly, transform inV so that its range is
-        //    [-vieHeight / 2, +viewHeight / 2]
+        //    [-viewHeight / 2, +viewHeight / 2]
         // 3) Set the origin field of outRay for an orthographic camera. 
         //    In an orthographic camera, the origin should depend on your transformed
         //    inU and inV and basisU and basisV.
         // 4) Set the direction field of outRay for an orthographic camera.
+        Vector3d tempBasisU = new Vector3d(basisU);
+        tempBasisU.mul(inU*this.viewWidth - this.viewWidth/2);
+        Vector3d tempBasisV = new Vector3d(basisV);
+        tempBasisV.mul(inV*this.viewHeight - this.viewHeight/2);
+        Vector3d tempviewPoint = new Vector3d(this.viewPoint);
+        
+        Vector3d newOrigin = tempviewPoint.add(tempBasisU.add(tempBasisV));
+        outRay.set(newOrigin, this.viewDir);
+        
+        outRay.makeOffsetRay();
     }
 
 }
