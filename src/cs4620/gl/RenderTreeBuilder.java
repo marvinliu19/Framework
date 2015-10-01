@@ -10,6 +10,8 @@ import cs4620.common.SceneCamera;
 import cs4620.common.SceneLight;
 import cs4620.common.SceneObject;
 import cs4620.common.Texture;
+import egl.math.Matrix3;
+import egl.math.Matrix4;
 import egl.math.Vector2;
 
 /**
@@ -19,6 +21,7 @@ import egl.math.Vector2;
  * 
  * @author cristian
  */
+@SuppressWarnings("unused")
 public class RenderTreeBuilder {
 
 	/**
@@ -119,9 +122,24 @@ public class RenderTreeBuilder {
 	 * @param env  The environment containing the hierarchy to be processed.
 	 */
 	public static void rippleTransformations(RenderEnvironment env) {
-		// TODO#A3 SOLUTION START
+		for (RenderObject c : env.root.children) {
+			rippleTransformationHelper(c);
 		}
-	// SOLUTION END
+		for (RenderCamera cam : env.cameras) {
+			cam.updateCameraMatrix(env.viewportSize);
+		}
+	}
+	
+	private static void rippleTransformationHelper(RenderObject node) {
+		node.mWorldTransform.set(node.sceneObject.transformation).mulAfter(node.parent.mWorldTransform);
+		
+		// normal transform matrix is the inverse transpose matrix of the transform matrix
+		node.mWorldTransformIT.set(node.mWorldTransform.getAxes()).transpose().invert();
+		
+		for (RenderObject c : node.children) {
+			rippleTransformationHelper(c);
+		}
+	}
 	
 	/**
 	 * Make a RenderMaterial for each Material in <scene>.

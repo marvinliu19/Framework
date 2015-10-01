@@ -4,6 +4,7 @@ import cs4620.common.SceneCamera;
 import cs4620.common.SceneObject;
 import egl.math.Matrix4;
 import egl.math.Vector2;
+import egl.math.Vector2d;
 
 public class RenderCamera extends RenderObject {
 	/**
@@ -53,21 +54,42 @@ public class RenderCamera extends RenderObject {
 		this.viewportSize.set(viewportSize);
 		
 		// The camera's transformation matrix is found in this.mWorldTransform (inherited from RenderObject).
-		// The other camera parameters are found in the scene camera (this.sceneCamera).
-		// Look through the methods in Matrix4 before you type in any matrices from the book or the OpenGL specification.
 		
-		// TODO#A3 SOLUTION START
+		// The other camera parameters are found in the scene camera (this.sceneCamera).
+		Vector2d imageSize = this.sceneCamera.imageSize;
+		Vector2d zPlanes = this.sceneCamera.zPlanes;
 
 		// Create viewing matrix
+		mView.set(this.mWorldTransform).invert();
 		
 		// Correct Image Aspect Ratio By Enlarging Image
+		float viewportAR = viewportSize.x/viewportSize.y;
+		float imageAR = (float) imageSize.x/ (float) imageSize.y;
 		
+		if (imageAR < viewportAR) {
+			imageSize.x = viewportAR * imageSize.y;
+		} else if (imageAR > viewportAR) {
+			imageSize.y = imageSize.x / viewportAR;
+		}
+		
+		// Create Projection		
+		if (sceneCamera.isPerspective) {
+			Matrix4.createPerspective(
+					(float) imageSize.x, 
+					(float) imageSize.y, 
+					(float) zPlanes.x, 
+					(float) zPlanes.y, 
+					mProj);
+		} else {
+			Matrix4.createOrthographic(
+					(float) imageSize.x, 
+					(float) imageSize.y, 
+					(float) zPlanes.x, 
+					(float) zPlanes.y, 
+					mProj);
+		}
 
-		// Create Projection
-		
-		
 		// Set the view projection matrix using the view and projection matrices
-	
-		// SOLUTION END
+		mViewProjection.set(mProj).mulBefore(mView);
 	}	
 }

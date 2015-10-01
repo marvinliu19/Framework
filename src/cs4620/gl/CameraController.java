@@ -108,9 +108,6 @@ public class CameraController {
 	 * @param motion  The translation in camera-space units
 	 */
 	protected void translate(Matrix4 parentWorld, Matrix4 transformation, Vector3 motion) {
-		// TODO#A3 SOLUTION START
-
-			
-		// SOLUTION END
+		Matrix4.createTranslation(motion, transformation);
 	}
 }
