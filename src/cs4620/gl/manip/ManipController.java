@@ -196,6 +196,15 @@ public class ManipController implements IDisposable {
 
 		// There are three kinds of manipulators; you can tell which kind you are dealing with by looking at manip.type.
 		// Each type has three different axes; you can tell which you are dealing with by looking at manip.axis.
+		if (manip.type == Manipulator.Type.ROTATE && manip.axis == Manipulator.Axis.X) {
+			float vertMotion = curMousePos.y - lastMousePos.y;
+			Matrix4 rotMat = Matrix4.createRotationX(vertMotion/(float)200.0);
+			if (this.parentSpace) {
+				object.mWorldTransform.mulAfter(rotMat);
+			} else {
+				object.mWorldTransform.mulBefore(rotMat);
+			}
+		}
 
 		// For rotation, you just need to apply a rotation in the correct space (either before or after the object's current
 		// transformation, depending on the parent mode this.parentSpace).
