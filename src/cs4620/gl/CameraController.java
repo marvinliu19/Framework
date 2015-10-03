@@ -93,10 +93,35 @@ public class CameraController {
 	 * @param rotation  The rotation in degrees, as Euler angles (rotation angles about x, y, z axes)
 	 */
 	protected void rotate(Matrix4 parentWorld, Matrix4 transformation, Vector3 rotation) {
-		// TODO#A3 SOLUTION START
 		
-				
-		// SOLUTION END
+		Vector3 rotDegrees = rotation.clone().mul((float) (Math.PI / 180.0));
+		Matrix4 rotMat = Matrix4.createRotationX(rotDegrees.x);
+		rotMat.mulAfter(Matrix4.createRotationY(rotation.y));
+		rotMat.mulAfter(Matrix4.createRotationZ(rotation.z));
+		
+		if (orbitMode) {
+			// The origin of the camera in camera space
+			Vector3 cameraOrigin = new Vector3(0, 0, 0);
+			
+			// Transformation is the camera's current transformation in terms of camera space
+			// Inverse is a camera to world transformation matrix
+			Matrix4 cameraToWorld = transformation.clone().invert();
+			
+			// Represent the camera origin in world space coordinates
+			cameraToWorld.mulPos(cameraOrigin);
+			
+			// Parent world is a frame to world matrix
+			Matrix4 worldToFrame = parentWorld.clone().invert();
+			worldToFrame.mulPos(cameraOrigin);
+			
+			// T_back*(rotMat * T_toOrigin)
+			// translate the camera to the world origin and rotate the camera
+			// translate the rotated camera back from the world origin
+			rotMat.mulBefore(Matrix4.createTranslation(cameraOrigin.clone().negate()));
+			rotMat.mulAfter(Matrix4.createTranslation(cameraOrigin));
+		}
+		transformation.mulBefore(rotMat);
+			
 	}
 	
 	/**
@@ -108,6 +133,6 @@ public class CameraController {
 	 * @param motion  The translation in camera-space units
 	 */
 	protected void translate(Matrix4 parentWorld, Matrix4 transformation, Vector3 motion) {
-		Matrix4.createTranslation(motion, transformation);
+		transformation.mulBefore(Matrix4.createTranslation(motion));
 	}
 }
