@@ -100,26 +100,30 @@ public class CameraController {
 		rotMat.mulAfter(Matrix4.createRotationZ(rotation.z));
 		
 		if (orbitMode) {
-			// The origin of the camera in camera space
-			Vector3 cameraOrigin = new Vector3(0, 0, 0);
+			// The origin of the world in world space that we will rotate around
+			Vector3 worldOrigin = new Vector3(0, 0, 0); // World space
 			
-			// Transformation is the camera's current transformation in terms of camera space
-			// Inverse is a camera to world transformation matrix
-			Matrix4 cameraToWorld = transformation.clone().invert();
+			// Multiplying by transformation is camera to world space
+			// Inverse is a world to camera space transformation matrix
+			Matrix4 worldToCamera = transformation.clone().invert();
 			
-			// Represent the camera origin in world space coordinates
-			cameraToWorld.mulPos(cameraOrigin);
+			// Represent the world origin in camera space
+			worldToCamera.mulPos(worldOrigin);
 			
-			// Parent world is a frame to world matrix
+			// Parent world is a parent space to world transformation
+			// Inverse is a world to parent space transformation
 			Matrix4 worldToFrame = parentWorld.clone().invert();
-			worldToFrame.mulPos(cameraOrigin);
+			worldToFrame.mulPos(worldOrigin);
 			
 			// T_back*(rotMat * T_toOrigin)
-			// translate the camera to the world origin and rotate the camera
-			// translate the rotated camera back from the world origin
-			rotMat.mulBefore(Matrix4.createTranslation(cameraOrigin.clone().negate()));
-			rotMat.mulAfter(Matrix4.createTranslation(cameraOrigin));
+			// translate the camera to the world origin (in camera space) and rotate the camera
+			// translate the rotated camera back from the world origin (in camera space)
+			// since we rotated the camera and its basis, the translation back is in 
+			// a rotated direction relative to world space
+			rotMat.mulBefore(Matrix4.createTranslation(worldOrigin.clone().negate()));
+			rotMat.mulAfter(Matrix4.createTranslation(worldOrigin));
 		}
+		
 		transformation.mulBefore(rotMat);
 			
 	}

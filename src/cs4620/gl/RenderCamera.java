@@ -60,6 +60,9 @@ public class RenderCamera extends RenderObject {
 		Vector2d zPlanes = this.sceneCamera.zPlanes;
 
 		// Create viewing matrix
+		// mWorldTransform is a camera space to world space transformation
+		// mWorldTransform inverse is a world space to camera space matrix (converts world space coordinates
+		// such that the new origin is at the camera location)
 		mView.set(this.mWorldTransform).invert();
 		
 		// Correct Image Aspect Ratio By Enlarging Image
