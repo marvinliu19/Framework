@@ -94,7 +94,7 @@ public class CameraController {
 	 */
 	protected void rotate(Matrix4 parentWorld, Matrix4 transformation, Vector3 rotation) {
 		
-		Vector3 rotDegrees = rotation.clone().mul((float) (Math.PI / 180.0));
+		Vector3 rotDegrees = rotation.clone().mul((float) (Math.PI / 1800.0));
 		Matrix4 rotMat = Matrix4.createRotationX(rotDegrees.x);
 		rotMat.mulAfter(Matrix4.createRotationY(rotation.y));
 		rotMat.mulAfter(Matrix4.createRotationZ(rotation.z));
