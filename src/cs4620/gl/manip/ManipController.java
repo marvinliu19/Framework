@@ -221,16 +221,9 @@ public class ManipController implements IDisposable {
     }
   }
   
-  // For translation and scaling, the object should follow the mouse.  Following the assignment writeup, you will achieve
-  // this by constructing the viewing rays and the axis in world space, and finding the t values *along the axis* where the
-  // ray comes closest (not t values along the ray as in ray tracing).  To do this you need to transform the manipulator axis
-  // from its frame (in which the coordinates are simple) to world space, and you need to get a viewing ray in world coordinates.
-
-  // There are many ways to compute a viewing ray, but perhaps the simplest is to take a pair of points that are on the ray,
-  // whose coordinates are simple in the canonical view space, and map them into world space using the appropriate matrix operations.
   private void translateOrRotate(Manipulator manip, RenderCamera camera, RenderObject object, Vector2 lastMousePos, Vector2 curMousePos, Boolean isTranslate) {
-    Vector3 manipOrigin = new Vector3(0,0,0);
-    Vector3 manipAxis = new Vector3(0,0,0);
+    Vector3 manipOrigin = new Vector3();
+    Vector3 manipAxis = new Vector3();
     
     // get the manipulator axis in manipulator space
     if (manip.axis == Manipulator.Axis.X) {
@@ -240,55 +233,56 @@ public class ManipController implements IDisposable {
     } else {
     	manipAxis.set(0, 0, 1);
     }
-
     
     if(parentSpace && object.parent != null) {
       object.parent.mWorldTransform.mulPos(manipOrigin); //origin is now in world space
-      object.parent.mWorldTransform.mulPos(manipAxis); //axis is now in world space
+      object.parent.mWorldTransform.mulDir(manipAxis); //axis is now in world space
     } else if (!parentSpace) {
       object.mWorldTransform.mulPos(manipOrigin); //origin is now in world space
-      object.mWorldTransform.mulPos(manipAxis); //axis is now in world space
+      object.mWorldTransform.mulDir(manipAxis); //axis is now in world space
     }
     
-    // compute viewing rays
-    Vector3 lastPointNear = new Vector3(lastMousePos.x, lastMousePos.y, -1); // canonical view space
-    Vector3 lastPointFar = new Vector3(lastMousePos.x, lastMousePos.y, 1);
-    
-    Vector3 curPointNear = new Vector3(curMousePos.x, curMousePos.y, -1); // canonical view space
-    Vector3 curPointFar = new Vector3(curMousePos.x, curMousePos.y, 1);
-    
+    // compute click points
+    Vector3 lastPoint = new Vector3(lastMousePos.x, lastMousePos.y, -1); // canonical view space
+    Vector3 curPoint = new Vector3(curMousePos.x, curMousePos.y, -1); // canonical view space
+
     Matrix4 canonicalViewToWorld = camera.mViewProjection.clone().invert();
-    canonicalViewToWorld.mulPos(lastPointNear); // last mouse click in world space
-    canonicalViewToWorld.mulPos(lastPointFar);
+    canonicalViewToWorld.mulPos(lastPoint); // last mouse click in world space
+    canonicalViewToWorld.mulPos(curPoint); // current mouse click in world space
     
-    canonicalViewToWorld.mulPos(curPointNear); // current mouse click in world space
-    canonicalViewToWorld.mulPos(curPointFar);
+    // project rays from manipOrigin to click points onto the manip axis to find t values
+    float t1 = curPoint.clone().sub(manipOrigin).dot(manipAxis);
+    float t2 = lastPoint.clone().sub(manipOrigin).dot(manipAxis);
     
-    Vector3 lastOrigin = lastPointNear;
-    Vector3 lastDirection = lastPointFar.clone().sub(lastOrigin).normalize();
+    float translationAmount = (t1-t2) * (float) 500;
+    float scaleAmount = (t1/t2);
     
-    Vector3 curOrigin = curPointNear;
-    Vector3 curDirection = curPointFar.clone().sub(curOrigin).normalize();
-    
-    Vector3 delta = curPointFar.clone().sub(lastPointFar); 
-    float amount = delta.dot(manipAxis);
-    amount = (isTranslate) ? amount / (float) 100 : amount;
-        
+    // amplify the scale amount so that it can be seen
+    for (int i = 0; i < 100; i++) {
+    	 if (Math.abs(scaleAmount-1) < 0.01) {
+    	    	scaleAmount *= scaleAmount;
+    	 } else {
+    		 break;
+    	 }
+    }
+   
+    // set the transformation vector
     Vector3 transformation = new Vector3();
     if (manip.axis == Manipulator.Axis.X && isTranslate) {
-    	transformation.set(amount, 0, 0);
+    	transformation.set(translationAmount, 0, 0);
     } else if (manip.axis == Manipulator.Axis.X && !isTranslate) {
-    	transformation.set(amount, 1, 1);
+    	transformation.set(scaleAmount, 1, 1);
     } else if (manip.axis == Manipulator.Axis.Y && isTranslate) {
-    	transformation.set(0, amount, 0);
+    	transformation.set(0, translationAmount, 0);
     } else if (manip.axis == Manipulator.Axis.Y && !isTranslate) {
-    	transformation.set(1, amount, 1);
+    	transformation.set(1, scaleAmount, 1);
     } else if (manip.axis == Manipulator.Axis.Z && isTranslate) {
-    	transformation.set(0, 0, amount);
+    	transformation.set(0, 0, translationAmount);
     } else {
-    	transformation.set(1, 1, amount);
+    	transformation.set(1, 1, scaleAmount);
     }
     
+    // apply either translation or scaling
     Matrix4 m = (isTranslate) ? Matrix4.createTranslation(transformation) : Matrix4.createScale(transformation);
     
     if (parentSpace) {
@@ -296,6 +290,7 @@ public class ManipController implements IDisposable {
     } else {
       object.sceneObject.transformation.mulBefore(m);
     }
+    
   }
   
   public void checkMouse(int mx, int my, RenderCamera camera) {
