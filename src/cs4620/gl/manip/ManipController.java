@@ -204,17 +204,14 @@ public class ManipController implements IDisposable {
     float vertMotion = curMousePos.y - lastMousePos.y;
     Matrix4 rotMat = new Matrix4();
     
-    switch (axis) {
-    case Manipulator.Axis.X:
-      rotMat.set(Matrix4.createRotationX(vertMotion/(float)2.0));
-    case Manipulator.Axis.Y:
-      rotMat.set(Matrix4.createRotationY(vertMotion/(float)2.0));
-    case Manipulator.Axis.Z:
-      rotMat.set(Matrix4.createRotationZ(vertMotion/(float)2.0));
-    default:
-      break;
+    if (axis == Manipulator.Axis.X) {
+    	rotMat.set(Matrix4.createRotationX(vertMotion));
+    } else if (axis == Manipulator.Axis.Y) {
+    	rotMat.set(Matrix4.createRotationY(vertMotion));
+    } else {
+    	rotMat.set(Matrix4.createRotationZ(vertMotion));
     }
-
+    
     if (parentSpace) {
       object.sceneObject.transformation.mulAfter(rotMat);
     } else {
@@ -234,14 +231,14 @@ public class ManipController implements IDisposable {
     Vector3 manipAxis = new Vector3(0,0,0);
     
     // get the manipulator axis in manipulator space
-    switch (manip.axis) {
-    case Manipulator.Axis.X:
-      manipAxis.set(1, 0, 0);
-    case Manipulator.Axis.Y:
-      manipAxis.set(0, 1, 0);
-    case Manipulator.Axis.Z:
-      manipAxis.set(0, 0, 1);
+    if (manip.axis == Manipulator.Axis.X) {
+    	manipAxis.set(1, 0, 0);
+    } else if (manip.axis == Manipulator.Axis.Y) {
+    	manipAxis.set(0, 1, 0);
+    } else {
+    	manipAxis.set(0, 0, 1);
     }
+
     
     if(parentSpace && object.parent != null) {
       object.parent.mWorldTransform.mulPos(manipOrigin); //origin is now in world space
@@ -276,15 +273,12 @@ public class ManipController implements IDisposable {
     float tCur = curOrigin.clone().sub(manipOrigin).dot(manipAxis);
     
     Vector3 translation = new Vector3();
-    switch (manip.axis) {
-    case Manipulator.Axis.X:
-      translation.set(tCur-tLast, 0, 0);
-    case Manipulator.Axis.Y:
-      translation.set(0, tCur-tLast, 0);
-    case Manipulator.Axis.Z:
-      translation.set(0, 0, tCur-tLast);
-    default: 
-      break;
+    if (manip.axis == Manipulator.Axis.X) {
+    	translation.set(tCur-tLast, 0, 0);
+    } else if (manip.axis == Manipulator.Axis.Y) {
+    	translation.set(0, tCur-tLast, 0);
+    } else {
+    	translation.set(0, 0, tCur-tLast);
     }
     
     Matrix4 transMat = Matrix4.createTranslation(translation);
