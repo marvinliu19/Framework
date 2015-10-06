@@ -196,8 +196,10 @@ public class ManipController implements IDisposable {
     if (manip.type == Manipulator.Type.ROTATE) {
     	rotate(manip.axis, object, lastMousePos, curMousePos);
     } else if (manip.type == Manipulator.Type.TRANSLATE) {
-    	translate(manip, camera, object, lastMousePos, curMousePos);
-    } 
+    	translateOrRotate(manip, camera, object, lastMousePos, curMousePos, true);
+    } else {
+    	translateOrRotate(manip, camera, object, lastMousePos, curMousePos, false);
+    }
   }
   
   private void rotate(int axis, RenderObject object, Vector2 lastMousePos, Vector2 curMousePos) {
@@ -226,7 +228,7 @@ public class ManipController implements IDisposable {
 
   // There are many ways to compute a viewing ray, but perhaps the simplest is to take a pair of points that are on the ray,
   // whose coordinates are simple in the canonical view space, and map them into world space using the appropriate matrix operations.
-  private void translate(Manipulator manip, RenderCamera camera, RenderObject object, Vector2 lastMousePos, Vector2 curMousePos) {
+  private void translateOrRotate(Manipulator manip, RenderCamera camera, RenderObject object, Vector2 lastMousePos, Vector2 curMousePos, Boolean isTranslate) {
     Vector3 manipOrigin = new Vector3(0,0,0);
     Vector3 manipAxis = new Vector3(0,0,0);
     
@@ -268,25 +270,31 @@ public class ManipController implements IDisposable {
     Vector3 curOrigin = curPointNear;
     Vector3 curDirection = curPointFar.clone().sub(curOrigin).normalize();
     
-    // this is wrong, how to calculate t???
-    float tLast = lastOrigin.clone().sub(manipOrigin).dot(manipAxis);
-    float tCur = curOrigin.clone().sub(manipOrigin).dot(manipAxis);
-    
-    Vector3 translation = new Vector3();
-    if (manip.axis == Manipulator.Axis.X) {
-    	translation.set(tCur-tLast, 0, 0);
-    } else if (manip.axis == Manipulator.Axis.Y) {
-    	translation.set(0, tCur-tLast, 0);
+    Vector3 delta = curPointFar.clone().sub(lastPointFar); 
+    float amount = delta.dot(manipAxis);
+    amount = (isTranslate) ? amount / (float) 100 : amount;
+        
+    Vector3 transformation = new Vector3();
+    if (manip.axis == Manipulator.Axis.X && isTranslate) {
+    	transformation.set(amount, 0, 0);
+    } else if (manip.axis == Manipulator.Axis.X && !isTranslate) {
+    	transformation.set(amount, 1, 1);
+    } else if (manip.axis == Manipulator.Axis.Y && isTranslate) {
+    	transformation.set(0, amount, 0);
+    } else if (manip.axis == Manipulator.Axis.Y && !isTranslate) {
+    	transformation.set(1, amount, 1);
+    } else if (manip.axis == Manipulator.Axis.Z && isTranslate) {
+    	transformation.set(0, 0, amount);
     } else {
-    	translation.set(0, 0, tCur-tLast);
+    	transformation.set(1, 1, amount);
     }
     
-    Matrix4 transMat = Matrix4.createTranslation(translation);
+    Matrix4 m = (isTranslate) ? Matrix4.createTranslation(transformation) : Matrix4.createScale(transformation);
     
     if (parentSpace) {
-      object.sceneObject.transformation.mulAfter(transMat);
+      object.sceneObject.transformation.mulAfter(m);
     } else {
-      object.sceneObject.transformation.mulBefore(transMat);
+      object.sceneObject.transformation.mulBefore(m);
     }
   }
   
