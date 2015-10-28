@@ -12,9 +12,14 @@ uniform mat3 mWorldIT;
 
 // RenderMesh Input
 attribute vec4 vPosition; // Sem (POSITION 0)
+attribute vec3 vNormal; // Sem (NORMAL 0)
+
+varying vec3 fN; // normal at the vertex
+varying vec4 worldPos; // vertex position in world-space coordinates
 
 void main() {
-  // TODO A4
-  vec4 worldPos = mWorld * vPosition;
+  worldPos = mWorld * vPosition;
   gl_Position = mViewProjection * worldPos;
+
+  fN = normalize((mWorldIT * vNormal).xyz);
 }
