@@ -45,27 +45,27 @@ public class TexGenSphereNormalMap extends ACTextureGenerator {
 //		System.out.println("bump U: " + cU);
 //		System.out.println("bump V: " + cV);
 		
-		float phi = (float) (2 * Math.PI * u);
-		float theta = (float) (Math.PI * v) - (float) (Math.PI/2);
+		float theta = (float) (2.0 * Math.PI * u);
+		float phi = (float) (Math.PI * v);
 		
-		float cPhi = (float) (2 * Math.PI * cU);
-		float cTheta = (float) (Math.PI * cV) - (float) (Math.PI/2);
+		float cTheta = (float) (2.0 * Math.PI * cU);
+		float cPhi = (float) (Math.PI * cV);
 		
-		float x = (float) (Math.cos(theta) * Math.sin(phi));
-		float y = (float) (Math.sin(theta));
-		float z = (float) (Math.cos(theta) * Math.cos(phi));
+		float x = (float) (-1.0 * Math.sin(theta) * Math.sin(phi));
+		float y = (float) (Math.cos(phi));
+		float z = (float) (-1.0 * Math.cos(theta) * Math.sin(phi));
 		
-		float cX = (float) (Math.cos(cTheta) * Math.sin(cPhi));
-		float cY = (float) (Math.sin(cTheta));
-		float cZ = (float) (Math.cos(cTheta) * Math.cos(cPhi));
+		float cX = (float) (-1.0 * Math.sin(cTheta) * Math.sin(cPhi));
+		float cY = (float) (Math.cos(cPhi));
+		float cZ = (float) (-1.0 * Math.cos(cTheta) * Math.sin(cPhi));
 		
 		Vector3d cN = new Vector3d(cX, cY, cZ);
 		
 		Vector3d N = new Vector3d(x, y, z);
-		Vector3d T = new Vector3d(z, 0, -x);		
 		N.normalize();
+		Vector3d T = new Vector3d(N.z, 0, -N.x);		
 		T.normalize();
-		Vector3d B = T.clone().cross(N).normalize();
+		Vector3d B = N.clone().cross(T).normalize();
 		
 		Matrix4d TBN = new Matrix4d(
 				new Vector4d(T.x, T.y, T.z, 0),
@@ -84,7 +84,8 @@ public class TexGenSphereNormalMap extends ACTextureGenerator {
 		}
 		
 		TBN.mulDir(normal);
-		outColor.set(new Colord(normal));	
+		
+		outColor.set(new Colord((normal.x + 1)/2, (normal.y + 1)/2, (normal.z + 1)/2));	
 	}
 
 }
