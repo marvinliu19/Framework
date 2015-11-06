@@ -52,7 +52,60 @@ public class CubicBezier {
 		tessellate();
 	}
 	
-
+	// checks if curve needs to be further subdivided or not
+	private boolean isLinear(ArrayList<Vector2> curve){
+		Vector2 v1 = curve.get(1).clone().sub(curve.get(0));
+		Vector2 v2 = curve.get(2).clone().sub(curve.get(1));
+		Vector2 v3 = curve.get(3).clone().sub(curve.get(2));
+		
+		return (v1.angle(v2) < epsilon && v2.angle(v3) < epsilon);
+	}
+	
+	// Adds curve point, tangent, and normal
+	// Tangent is 3(p1-p0), approximation of derivative of cubic
+	private void draw(ArrayList<Vector2> curve){
+		curvePoints.add(curve.get(0));
+		curveTangents.add(curve.get(1).clone().sub(curve.get(0)).mul(3));
+	}
+	
+	// Applies de Casteljau's algorithm to approximate the Bezier curve
+	private void drawRecBezier(ArrayList<Vector2> curve, int level) {
+		if (curve.size() != 4) {
+			System.out.println("invalid curve");
+			return;
+		}
+		
+		if (isLinear(curve) || level == 10) {
+			draw(curve);
+		} else {
+			ArrayList<Vector2> leftCurve = new ArrayList<Vector2>();
+			ArrayList<Vector2> rightCurve = new ArrayList<Vector2>();
+			
+			Vector2 a0 = curve.get(0).clone();
+			Vector2 a1 = curve.get(1).clone();
+			Vector2 a2 = curve.get(2).clone();
+			Vector2 a3 = curve.get(3).clone();
+			Vector2 b0 = a0.clone().add(a1).div(2);
+			Vector2 b1 = a1.clone().add(a2).div(2);
+			Vector2 b2 = a2.clone().add(a3).div(2);
+			Vector2 c0 = b0.clone().add(b1).div(2);
+			Vector2 c1 = b1.clone().add(b2).div(2);
+			Vector2 d0 = c0.clone().add(c1).div(2);
+			
+			leftCurve.add(a0);
+			leftCurve.add(b0);
+			leftCurve.add(c0);
+			leftCurve.add(d0);
+			rightCurve.add(d0);
+			rightCurve.add(c1);
+			rightCurve.add(b2);
+			rightCurve.add(a3);
+			
+			drawRecBezier(leftCurve, level + 1);
+			drawRecBezier(rightCurve, level + 1);
+		}
+	}
+	
     /**
      * Approximate a Bezier segment with a number of vertices, according to an appropriate
      * smoothness criterion for how many are needed.  The points on the curve are written into the
@@ -60,12 +113,14 @@ public class CubicBezier {
      * The final point, p3, is not included, because cubic Beziers will be "strung together".
      */
     private void tessellate() {
-    	 // TODO A5
-    	//SOLUTION
+    	ArrayList<Vector2> curve = new ArrayList<Vector2>();
+    	curve.add(p0);
+    	curve.add(p1);
+    	curve.add(p2);
+    	curve.add(p3);
     	
-    	//END SOLUTION
+    	drawRecBezier(curve, 1);
     }
-	
     
     /**
      * @return The points on this cubic bezier
