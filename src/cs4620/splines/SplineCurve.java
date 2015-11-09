@@ -181,9 +181,35 @@ public abstract class SplineCurve {
 	 * If the spline is closed, include additional CubicBeziers to account for this.
 	 */
 	private void setBeziers() {
-		//TODO A5
 		this.bezierCurves = new ArrayList<CubicBezier>();
-		
+		if (isClosed) {
+			ArrayList<Vector2> controlPoints2 = new ArrayList<Vector2>();
+			for (Vector2 p: controlPoints) {
+				controlPoints2.add(p.clone());
+			}
+			
+			controlPoints2.add(controlPoints.get(0).clone());
+			controlPoints2.add(controlPoints.get(1).clone());
+			controlPoints2.add(controlPoints.get(2).clone());
+			
+			for (int i = 1; i <= controlPoints2.size() - 3; i++) {
+				Vector2 p0 = controlPoints2.get(i-1);
+				Vector2 p1 = controlPoints2.get(i);
+				Vector2 p2 = controlPoints2.get(i+1);
+				Vector2 p3 = controlPoints2.get(i+2);
+				
+				bezierCurves.add(this.toBezier(p0, p1, p2, p3, epsilon));
+			}
+		} else {
+			for (int i = 1; i <= controlPoints.size() - 3; i++) {
+				Vector2 p0 = controlPoints.get(i-1);
+				Vector2 p1 = controlPoints.get(i);
+				Vector2 p2 = controlPoints.get(i+1);
+				Vector2 p3 = controlPoints.get(i+2);
+				
+				bezierCurves.add(this.toBezier(p0, p1, p2, p3, epsilon));
+			}
+		}
 	}
 	
 	/**
@@ -232,14 +258,98 @@ public abstract class SplineCurve {
 	 * @param sliceTolerance > 0, the maximum angle in radians between adjacent vertical slices.
 	 */
 	public static void build3DRevolution(SplineCurve crossSection, MeshData data, float scale, float sliceTolerance) {
-		//TODO A5
+		// Calculate Vertex And Index Count
+		ArrayList<Vector2> points = crossSection.getPoints();
 		
-		/* Initialize the buffers for data.positions, data.normals, data.indices, and data.uvs as
-		 * you did for A1.  Although you will not be using uv's, you DO need to initialize the
-		 * buffer with space.  Don't forget to initialize data.indexCount and data.vertexCount.
-		 * 
-		 * Then set the data of positions / normals / indices with what you have calculated.
-		 */
+		int vertsPerSlice = points.size();
+		int numSlices = (int) (2*Math.PI / sliceTolerance);
+		data.vertexCount = (numSlices+1)*vertsPerSlice;
+		int tris = numSlices*(vertsPerSlice-1) * 2;
+		data.indexCount = tris * 3;
+
+		// Create Storage Spaces
+		data.positions = NativeMem.createFloatBuffer(data.vertexCount * 3);
+		data.uvs = NativeMem.createFloatBuffer(data.vertexCount * 2);
+		data.normals = NativeMem.createFloatBuffer(data.vertexCount * 3);
+		data.indices = NativeMem.createIntBuffer(data.indexCount);
+		
+		// Traverse Up The curve
+		for(int p = 0; p < vertsPerSlice; p++) {
+			float z = points.get(p).y * scale;
+			float r = points.get(p).x * scale;
+			
+//			float nZ = normals.get(p).y;
+			
+			for(int i = 0; i <= numSlices; i++) {
+				float theta = i * sliceTolerance;
+				float x = (float) (r * Math.cos(theta));
+				float y = (float) (r * Math.sin(theta));
+				
+//				float nX = (float) Math.cos(theta);
+//				float nY = (float) Math.sin(theta);
+//				
+//				Vector3 n = new Vector3(nX, nY, nZ);
+//				n.normalize();
+				
+				data.positions.put(x); data.positions.put(y); data.positions.put(z);
+//				data.normals.put(n.x); data.normals.put(n.y); data.normals.put(n.z);
+			}
+		}
+	
+		
+		// Create The Indices
+		for(int i = 0;i < vertsPerSlice-1;i++) {
+			int si = i * numSlices;
+			
+			for(int j = 0; j < numSlices; j++) {
+				data.indices.put(si + j);
+				data.indices.put(si + j + 1);
+				data.indices.put(si + j + numSlices);
+				
+				data.indices.put(si + j + 1);
+				data.indices.put(si + j + 1 + numSlices);
+				data.indices.put(si + j + numSlices);
+				
+			}
+		}
+		
+		// instantiate array of vertex normals with zero vectors
+		Vector3[] normals = new Vector3[data.vertexCount];
+		for (int i = 0; i < normals.length; i++) {
+			normals[i] = new Vector3(0,0,0);
+		}
+		
+		// for each triangle (a set of 3 indices from data.indices)
+		for (int i = 0; i < data.indexCount; i+=3) {
+			// get the index of the first vertex of this triangle
+			// get the (x,y,z) of the first vertex of this triangle
+			int v1i = data.indices.get(i);
+			Vector3 v1 = new Vector3(data.positions.get(3*v1i),data.positions.get(3*v1i+1),data.positions.get(3*v1i+2));
+			
+			int v2i = data.indices.get(i+1);
+			Vector3 v2 = new Vector3(data.positions.get(3*v2i),data.positions.get(3*v2i+1),data.positions.get(3*v2i+2));
+			
+			int v3i = data.indices.get(i+2);
+			Vector3 v3 = new Vector3(data.positions.get(3*v3i),data.positions.get(3*v3i+1),data.positions.get(3*v3i+2));
+			
+			// calculate the two vectors of the triangle and cross them to find the normal of the triangle
+			Vector3 p = v2.sub(v1);
+			Vector3 q = v3.sub(v1);
+			Vector3 normal = p.cross(q);
+			
+			// add the normal of the triangle to the normals of all vertices in the triangle
+			normals[v1i] = normals[v1i].add(normal);
+			normals[v2i] = normals[v2i].add(normal);
+			normals[v3i] = normals[v3i].add(normal);	
+		}
+		
+		// normalize each vertex normal and output it
+		for (int i = 0; i < normals.length; i++) {
+			normals[i] = normals[i].normalize();
+			data.normals.put(normals[i].x);
+			data.normals.put(normals[i].y);
+			data.normals.put(normals[i].z);
+		}
 
 	}
 }

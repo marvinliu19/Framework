@@ -9,6 +9,9 @@ import egl.math.Vector2;
 
 public class CubicBezier {
 	
+	// ratio for division of subsegments
+	public static final float RATIO = 0.5f;
+	
 	//This Bezier's control points
 	public Vector2 p0, p1, p2, p3;
 	
@@ -65,16 +68,13 @@ public class CubicBezier {
 	// Tangent is 3(p1-p0), approximation of derivative of cubic
 	private void draw(ArrayList<Vector2> curve){
 		curvePoints.add(curve.get(0));
-		curveTangents.add(curve.get(1).clone().sub(curve.get(0)).mul(3));
+		Vector2 tangent = curve.get(1).clone().sub(curve.get(0)).mul(3).normalize();
+		curveTangents.add(tangent);
+		curveNormals.add(new Vector2(tangent.y, -tangent.x));
 	}
 	
 	// Applies de Casteljau's algorithm to approximate the Bezier curve
 	private void drawRecBezier(ArrayList<Vector2> curve, int level) {
-		if (curve.size() != 4) {
-			System.out.println("invalid curve");
-			return;
-		}
-		
 		if (isLinear(curve) || level == 10) {
 			draw(curve);
 		} else {
@@ -85,12 +85,12 @@ public class CubicBezier {
 			Vector2 a1 = curve.get(1).clone();
 			Vector2 a2 = curve.get(2).clone();
 			Vector2 a3 = curve.get(3).clone();
-			Vector2 b0 = a0.clone().add(a1).div(2);
-			Vector2 b1 = a1.clone().add(a2).div(2);
-			Vector2 b2 = a2.clone().add(a3).div(2);
-			Vector2 c0 = b0.clone().add(b1).div(2);
-			Vector2 c1 = b1.clone().add(b2).div(2);
-			Vector2 d0 = c0.clone().add(c1).div(2);
+			Vector2 b0 = a0.clone().lerp(a1, RATIO);
+			Vector2 b1 = a1.clone().lerp(a2, RATIO);
+			Vector2 b2 = a2.clone().lerp(a3, RATIO);
+			Vector2 c0 = b0.clone().lerp(b1, RATIO);
+			Vector2 c1 = b1.clone().lerp(b2, RATIO);
+			Vector2 d0 = c0.clone().lerp(c1, RATIO);
 			
 			leftCurve.add(a0);
 			leftCurve.add(b0);
