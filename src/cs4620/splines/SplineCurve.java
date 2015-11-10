@@ -262,9 +262,9 @@ public abstract class SplineCurve {
 		ArrayList<Vector2> points = crossSection.getPoints();
 		
 		int vertsPerSlice = points.size();
-		int numSlices = (int) (2*Math.PI / sliceTolerance);
-		data.vertexCount = (numSlices+1)*vertsPerSlice;
-		int tris = numSlices*(vertsPerSlice-1) * 2;
+		int numSlices = (int) Math.ceil(2*Math.PI / sliceTolerance);
+		data.vertexCount = (numSlices+1)*(vertsPerSlice+1);
+		int tris = numSlices*vertsPerSlice* 2;
 		data.indexCount = tris * 3;
 
 		// Create Storage Spaces
@@ -274,44 +274,36 @@ public abstract class SplineCurve {
 		data.indices = NativeMem.createIntBuffer(data.indexCount);
 		
 		// Traverse Up The curve
-		for(int p = 0; p < vertsPerSlice; p++) {
-			float z = points.get(p).y * scale;
-			float r = points.get(p).x * scale;
+		for(int p = 0; p < vertsPerSlice + 1; p++) {
+			int j = p%(points.size());
 			
-//			float nZ = normals.get(p).y;
-			
-			for(int i = 0; i <= numSlices; i++) {
-				float theta = i * sliceTolerance;
+			float z = points.get(j).y * scale;
+			float r = points.get(j).x * scale;
+						
+			for(int i = 0; i < numSlices + 1; i++) {
+				float theta = (float) (i * (2*Math.PI/ (float) numSlices));
 				float x = (float) (r * Math.cos(theta));
 				float y = (float) (r * Math.sin(theta));
-				
-//				float nX = (float) Math.cos(theta);
-//				float nY = (float) Math.sin(theta);
-//				
-//				Vector3 n = new Vector3(nX, nY, nZ);
-//				n.normalize();
-				
 				data.positions.put(x); data.positions.put(y); data.positions.put(z);
-//				data.normals.put(n.x); data.normals.put(n.y); data.normals.put(n.z);
 			}
 		}
 	
 		
 		// Create The Indices
-		for(int i = 0;i < vertsPerSlice-1;i++) {
-			int si = i * numSlices;
+		for(int i = 0; i < vertsPerSlice; i++) {
+			int si = i * (numSlices+1);
 			
 			for(int j = 0; j < numSlices; j++) {
 				data.indices.put(si + j);
 				data.indices.put(si + j + 1);
-				data.indices.put(si + j + numSlices);
+				data.indices.put(si + j + 1 + numSlices);
 				
-				data.indices.put(si + j + 1);
+				data.indices.put(si + j);
 				data.indices.put(si + j + 1 + numSlices);
 				data.indices.put(si + j + numSlices);
-				
 			}
 		}
+		
 		
 		// instantiate array of vertex normals with zero vectors
 		Vector3[] normals = new Vector3[data.vertexCount];

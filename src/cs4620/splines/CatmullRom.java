@@ -23,16 +23,6 @@ public class CatmullRom extends SplineCurve {
 		Vector4 px = new Vector4(p0.x, p1.x, p2.x, p3.x);
 		Vector4 py = new Vector4(p0.y, p1.y, p2.y, p3.y);
 		
-//		Matrix4 cM = new Matrix4(0.0f, 1.0f, 0.0f, 0.0f,
-//								-0.5f, 0.0f, 0.5f, 0.0f,
-//								1.0f, -2.5f, 2.0f, -0.5f,
-//								-0.5f, 1.5f, -1.5f, 0.5f);
-//		
-//		Matrix4 bM = new Matrix4(1, 0, 0, 0,
-//								-3, 3, 0, 0,
-//								3, -6, 3, 0,
-//								-1, 3, -3, 1);
-		
 		Matrix4 cM = new Matrix4(-0.5f, 1.5f, -1.5f, 0.5f,
 								1.0f, -2.5f, 2.0f, -0.5f,
 								-0.5f, 0.0f, 0.5f, 0.0f,
