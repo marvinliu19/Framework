@@ -1,6 +1,7 @@
 package cs4620.anim;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import cs4620.common.Scene;
 import cs4620.common.SceneObject;
@@ -144,28 +145,45 @@ public class AnimationEngine {
 	 * The Current Frame - For Each Updated Transformation, An Event Has To Be 
 	 * Sent Through The Scene Notifying Everyone Of The Change
 	 */
-
-	// TODO A6 - Animation
-
 	 public void updateTransformations() {
-		// Loop Through All The Timelines
-		// And Update Transformations Accordingly
-		// (You WILL Need To Use this.scene)
-
-		// get pair of surrounding frames
-		// (function in AnimTimeline)
-
-		// get interpolation ratio
-
-		// interpolate translations linearly
-
-		// polar decompose axis matrices
-
-		// slerp rotation matrix and linearly interpolate scales
-
-		// combine interpolated R,S,and T
-
-
+		for (String k : timelines.keySet()) {
+			AnimTimeline t = timelines.get(k);
+			AnimKeyframe[] surrounding = new AnimKeyframe[2];
+			t.getSurroundingFrames(getCurrentFrame(), surrounding);
+			AnimKeyframe f1 = surrounding[0];
+			AnimKeyframe f2 = surrounding[1];
+			
+			float ratio = getRatio(f1.frame, f2.frame, getCurrentFrame());
+			
+			Vector3 trans1 = f1.transformation.getTrans();
+			Vector3 trans2 = f2.transformation.getTrans();
+			Matrix3 rs1 = f1.transformation.getAxes();
+			Matrix3 rs2 = f2.transformation.getAxes();
+			Matrix3 r1 = new Matrix3();
+			Matrix3 s1 = new Matrix3();
+			Matrix3 r2 = new Matrix3();
+			Matrix3 s2 = new Matrix3();
+			rs1.polar_decomp(r1,s1);
+			rs2.polar_decomp(r2, s2);
+			
+			Vector3 trans = trans1.clone().lerp(trans2, ratio);
+			Matrix3 scale = s1.clone().interpolate(s1, s2, ratio);
+			
+			Quat q1 = new Quat(r1);
+			Quat q2 = new Quat(r2);
+			
+			Quat q = Quat.slerp(q1, q2, ratio);
+			Matrix3 rotate = q.toRotationMatrix(new Matrix3());
+			
+			Matrix3 rs = rotate.clone().mulBefore(scale);
+			Matrix4 rst = new Matrix4(rs);
+			rst.set(0, 3, trans.x);
+			rst.set(1, 3, trans.y);
+			rst.set(2, 3, trans.z);
+			
+			t.object.transformation.set(rst);
+			this.scene.sendEvent(new SceneTransformationEvent(t.object));
+		}
 	 }
 
          public static float getRatio(int min, int max, int cur) {
