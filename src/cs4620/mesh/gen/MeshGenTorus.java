@@ -11,6 +11,7 @@ import egl.math.Vector3;
  * @author Cristian (Original)
  * @author Tongcheng (Revised 8/26/2015)
  */
+@SuppressWarnings("unused")
 public class MeshGenTorus extends MeshGenerator {
 	@Override
 	public void generate(MeshData outData, MeshGenOptions opt) {

@@ -9,7 +9,7 @@ import egl.math.Vector3;
 import egl.math.Vector3i;
 import egl.math.Vector4;
 
-
+@SuppressWarnings("unused")
 public abstract class SplineCurve {
 	private float epsilon;
 	
@@ -288,23 +288,22 @@ public abstract class SplineCurve {
 			}
 		}
 	
+		// Create the triangles
+		int n = vertsPerSlice;
+		int m = numSlices;
 		
-		// Create The Indices
-		for(int i = 0; i < vertsPerSlice; i++) {
-			int si = i * (numSlices+1);
-			
-			for(int j = 0; j < numSlices; j++) {
-				data.indices.put(si + j);
-				data.indices.put(si + j + 1);
-				data.indices.put(si + j + 1 + numSlices);
+		for (int i = 0; i < n; i++) {
+			for (int t = 0; t < m; t++) {
+				data.indices.put(i*(m+1) + t);
+				data.indices.put(i*(m+1) + t + 1);
+				data.indices.put((i+1)*(m+1) + t);
 				
-				data.indices.put(si + j);
-				data.indices.put(si + j + 1 + numSlices);
-				data.indices.put(si + j + numSlices);
-			}
+				data.indices.put(i*(m+1) + t + 1);
+				data.indices.put((i+1)*(m+1) + t + 1);
+				data.indices.put((i+1)*(m+1) + t);
+			}	
 		}
-		
-		
+				
 		// instantiate array of vertex normals with zero vectors
 		Vector3[] normals = new Vector3[data.vertexCount];
 		for (int i = 0; i < normals.length; i++) {
