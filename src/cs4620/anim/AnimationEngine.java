@@ -146,6 +146,7 @@ public class AnimationEngine {
 	 * Sent Through The Scene Notifying Everyone Of The Change
 	 */
 	 public void updateTransformations() {
+
 		for (String k : timelines.keySet()) {
 			AnimTimeline t = timelines.get(k);
 			AnimKeyframe[] surrounding = new AnimKeyframe[2];
