@@ -1,8 +1,6 @@
 package cs4620.anim;
 
 import java.util.HashMap;
-import java.util.Set;
-
 import cs4620.common.Scene;
 import cs4620.common.SceneObject;
 import cs4620.common.event.SceneTransformationEvent;
