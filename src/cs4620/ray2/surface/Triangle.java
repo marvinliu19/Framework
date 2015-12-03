@@ -5,6 +5,7 @@ import cs4620.ray2.Ray;
 import egl.math.Vector3d;
 import egl.math.Vector3i;
 import cs4620.ray2.shader.Shader;
+import java.util.*;
 
 /**
  * Represents a single triangle, part of a triangle mesh
@@ -136,13 +137,16 @@ public class Triangle extends Surface {
 		// averagePosition, minBound, and maxBound.
 
 		// Get three vertices of owning triangle
-		Vector3d v0 = tMat.mulPos(owner.getPosition(index.x).clone());
-		Vector3d v1 = tMat.mulPos(owner.getPosition(index.y).clone());
-		Vector3d v2 = tMat.mulPos(owner.getPosition(index.z).clone());
+		Vector3d v0 = owner.getPosition(index.x).clone();
+		Vector3d v1 = owner.getPosition(index.y).clone();
+		Vector3d v2 = owner.getPosition(index.z).clone();
+		tMat.mulPos(v1);
+		tMat.mulPos(v0);
+		tMat.mulPos(v2);
 		
 		// Calculate epicenter of triangle
-		averagePosition = new Vector3d((1/3)*(v0.x + v1.x + v2.x), (1/3)*(v0.y + v1.y + v2.y), (1/3)*(v0.z + v1.z + v2.z));
-		averagePosition = tMat.mulPos(averagePosition);
+		averagePosition = new Vector3d((1/3)*(v0.x + v1.x + v2.x), 
+				(1/3)*(v0.y + v1.y + v2.y), (1/3)*(v0.z + v1.z + v2.z));		
 		
 		// Find the max and min bounds of the triangle:
 		double minX = Math.min(v0.x, Math.min(v1.x, v2.x));

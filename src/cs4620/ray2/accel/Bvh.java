@@ -71,7 +71,7 @@ public class Bvh implements AccelStruct {
 					if (anyIntersection) return true;
 					hit = true;
 					if (rec.t < r.end) {
-						// update the end of our ray to be the first interesection
+						// update the end of our ray to be the first intersection
 						r.end = rec.t;
 						outRecord.set(rec);		// update the output intersection record
 					}
@@ -80,9 +80,24 @@ public class Bvh implements AccelStruct {
 			
 			return hit;
 		} else {
-			// contains at least one child, call recursively
-			if (node.child[0] != null) intersectHelper(node.child[0], rec, r, anyIntersection);
-			if (node.child[1] != null) intersectHelper(node.child[0], rec, r, anyIntersection);
+			// is not a leaf, need to call on left and right nodes
+			if (intersectHelper(node.child[0], rec, r, anyIntersection)) {
+				// at some point, we found an intersection on the left side
+				if (anyIntersection) return true;		// if any OK, then let's just return true immediately
+				hit = true;								// otherwise, signal that we found something
+				r.end = rec.t;							
+				outRecord.set(rec);
+			}
+	
+			if (intersectHelper(node.child[1], rec, r, anyIntersection)) {
+				// the right side
+				if (anyIntersection) return true;
+				hit = true;
+				r.end = rec.t;
+				outRecord.set(rec);
+			}
+			//if (node.child[0] != null) intersectHelper(node.child[0], rec, r, anyIntersection);
+			//if (node.child[1] != null) intersectHelper(node.child[1], rec, r, anyIntersection);
 		}
 		
         return hit;
@@ -112,8 +127,11 @@ public class Bvh implements AccelStruct {
 		// Find out the BIG bounding box enclosing all the surfaces in the range [start, end)
 		// and store them in minB and maxB.
 		// Hint: To find the bounding box for each surface, use getMinBound() and getMaxBound() */
-		Vector3d minBound = surfaces[0].getMinBound();
-		Vector3d maxBound = surfaces[0].getMaxBound();
+		//Vector3d minBound = surfaces[0].getMinBound();
+		//Vector3d maxBound = surfaces[0].getMaxBound();
+	
+		Vector3d minBound = new Vector3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY); 
+		Vector3d maxBound = new Vector3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 		
 		// Find the minimum and maximum bounding boxes
 		for (int i = start; i < end; i++) {
@@ -121,8 +139,8 @@ public class Bvh implements AccelStruct {
 			Vector3d maxForSurface = surfaces[i].getMaxBound();
 			minBound = new Vector3d(Math.min(minForSurface.x, minBound.x), 
 					Math.min(minForSurface.y, minBound.y), Math.min(minForSurface.z, minBound.z));
-			maxBound = new Vector3d(Math.min(maxForSurface.x, maxBound.x), 
-					Math.min(maxForSurface.y, maxBound.y), Math.min(maxForSurface.z, maxBound.z));
+			maxBound = new Vector3d(Math.max(maxForSurface.x, maxBound.x), 
+					Math.max(maxForSurface.y, maxBound.y), Math.max(maxForSurface.z, maxBound.z));
 		}
 
 		// ==== Step 2 ====
