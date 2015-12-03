@@ -148,8 +148,14 @@ public class Cylinder extends Surface {
 		// TODO#A7: Compute the bounding box and store the result in
 		// averagePosition, minBound, and maxBound.
 		// Hint: The bounding box may be transformed by a transformation matrix.
-
-        
+		averagePosition = tMat.mulPos(center.clone());
+		
+		// convert from object to world so we can store min and max bounds
+		Vector3d worldMin = tMat.mulPos(new Vector3d(center.x - radius, center.y - radius, center.z - height));
+		Vector3d worldMax = tMat.mulPos(new Vector3d(center.x + radius, center.y + radius, center.z + height));
+		
+		minBound = new Vector3d(worldMin.x, worldMin.y, worldMin.z);
+		maxBound = new Vector3d(worldMax.x, worldMax.y, worldMax.z);
 	}
 
 	/**

@@ -135,6 +135,26 @@ public class Triangle extends Surface {
 		// TODO#A7: Compute the bounding box and store the result in
 		// averagePosition, minBound, and maxBound.
 
+		// Get three vertices of owning triangle
+		Vector3d v0 = tMat.mulPos(owner.getPosition(index.x).clone());
+		Vector3d v1 = tMat.mulPos(owner.getPosition(index.y).clone());
+		Vector3d v2 = tMat.mulPos(owner.getPosition(index.z).clone());
+		
+		// Calculate epicenter of triangle
+		averagePosition = new Vector3d((1/3)*(v0.x + v1.x + v2.x), (1/3)*(v0.y + v1.y + v2.y), (1/3)*(v0.z + v1.z + v2.z));
+		averagePosition = tMat.mulPos(averagePosition);
+		
+		// Find the max and min bounds of the triangle:
+		double minX = Math.min(v0.x, Math.min(v1.x, v2.x));
+		double minY = Math.min(v0.y, Math.min(v1.y, v2.y));
+		double minZ = Math.min(v0.z, Math.min(v1.z, v2.z));
+		
+		double maxX = Math.max(v0.x, Math.max(v1.x, v2.x));
+		double maxY = Math.max(v0.y, Math.max(v1.y, v2.y));
+		double maxZ = Math.max(v0.z, Math.max(v1.z, v2.z));
+		
+		minBound = new Vector3d(minX, minY, minZ);
+		maxBound = new Vector3d(maxX, maxY, maxZ);
         
 	}
 

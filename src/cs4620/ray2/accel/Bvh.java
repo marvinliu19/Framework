@@ -57,8 +57,35 @@ public class Bvh implements AccelStruct {
 		// TODO#A7: fill in this function.
 		// Hint: For a leaf node, use a normal linear search. Otherwise, search in the left and right children.
 		// Another hint: save time by checking if the ray intersects the node first before checking the childrens.
-
-        return false;
+		Ray r = new Ray(rayIn);
+		IntersectionRecord rec = new IntersectionRecord();
+		boolean hit = false;
+		
+		if (!node.intersects(r)) return false;
+		
+		if (node.isLeaf()) {
+			// at a leaf node, so do a linear search
+			for (int i = node.surfaceIndexStart; i < node.surfaceIndexEnd; i++) {
+				if (surfaces[i].intersect(rec, r)) {
+					// if we enter this section, then we indeed have an intersection with the i'th surface
+					if (anyIntersection) return true;
+					hit = true;
+					if (rec.t < r.end) {
+						// update the end of our ray to be the first interesection
+						r.end = rec.t;
+						outRecord.set(rec);		// update the output intersection record
+					}
+				}
+			}
+			
+			return hit;
+		} else {
+			// contains at least one child, call recursively
+			if (node.child[0] != null) intersectHelper(node.child[0], rec, r, anyIntersection);
+			if (node.child[1] != null) intersectHelper(node.child[0], rec, r, anyIntersection);
+		}
+		
+        return hit;
 	}
 
 
@@ -85,27 +112,55 @@ public class Bvh implements AccelStruct {
 		// Find out the BIG bounding box enclosing all the surfaces in the range [start, end)
 		// and store them in minB and maxB.
 		// Hint: To find the bounding box for each surface, use getMinBound() and getMaxBound() */
+		Vector3d minBound = surfaces[0].getMinBound();
+		Vector3d maxBound = surfaces[0].getMaxBound();
+		
+		// Find the minimum and maximum bounding boxes
+		for (int i = start; i < end; i++) {
+			Vector3d minForSurface = surfaces[i].getMinBound();
+			Vector3d maxForSurface = surfaces[i].getMaxBound();
+			minBound = new Vector3d(Math.min(minForSurface.x, minBound.x), 
+					Math.min(minForSurface.y, minBound.y), Math.min(minForSurface.z, minBound.z));
+			maxBound = new Vector3d(Math.min(maxForSurface.x, maxBound.x), 
+					Math.min(maxForSurface.y, maxBound.y), Math.min(maxForSurface.z, maxBound.z));
+		}
 
-        
 		// ==== Step 2 ====
 		// Check for the base case. 
 		// If the range [start, end) is small enough (e.g. less than or equal to 10), just return a new leaf node.
-
+		if (end - start <= 10)  return new BvhNode(minBound, maxBound, null, null, start, end);
 
 		// ==== Step 3 ====
 		// Figure out the widest dimension (x or y or z).
 		// If x is the widest, set widestDim = 0. If y, set widestDim = 1. If z, set widestDim = 2.
-
-
+		double xWidth = maxBound.x - minBound.x;
+		double yWidth = maxBound.y - minBound.y;
+		double zWidth = maxBound.z - minBound.z;
+		
+		int widestDim = 0;						// assumes this will always be set properly
+		if (xWidth > yWidth && xWidth > zWidth) {
+			// x is greatest
+			widestDim = 0;
+		} else if (yWidth > xWidth && yWidth > zWidth) {
+			// y is greatest
+			widestDim = 1;
+		} else if (zWidth > xWidth && zWidth > yWidth) {
+			// z is greatest
+			widestDim = 2;
+		}
 		// ==== Step 4 ====
 		// Sort surfaces according to the widest dimension.
-
+		cmp.setIndex(widestDim);		// set our comparator's compare function
+		Arrays.sort(surfaces, cmp);		// sort our surfaces array by our comparator
 
 		// ==== Step 5 ====
 		// Recursively create left and right children.
-
+		// Call on left and right half of arrays
+		BvhNode left = createTree(start, (start + end)/2);
+		BvhNode right = createTree((start + end)/2, end);
         
-        return root;
+		return new BvhNode(minBound, maxBound, left, right, start, end);
+       // return root;
 	}
 
 }

@@ -84,7 +84,32 @@ public class BvhNode {
 	 */
 	public boolean intersects(Ray ray) {
 		// TODO#A7: fill in this function.
-
-        return false;
+		// We need to check if our ray intersects with our bounding box
+		// Our box is defined by [x_min, x_max] x [y_min, y_max] x [z_min, z_max]
+		// Code adapted from 34 Ray Tracing Lecture
+		Ray r = new Ray(ray);
+		
+		double txmin = (minBound.x - r.origin.x)/r.direction.x;
+		double txmax = (maxBound.x - r.origin.x)/r.direction.x;
+		
+		double tymin = (minBound.y - r.origin.y)/r.direction.y;
+		double tymax = (maxBound.y - r.origin.y)/r.direction.y;
+		
+		double tzmin = (minBound.z - r.origin.z)/r.direction.z;
+		double tzmax = (maxBound.z - r.origin.z)/r.direction.z;
+		
+		double txenter = Math.min(txmin, txmax);
+		double txexit = Math.max(txmin,  txmax);
+		
+		double tyenter = Math.min(tymin, tymax);
+		double tyexit = Math.max(tymin,  tymax);
+		
+		double tzenter = Math.min(tzmin, tzmax);
+		double tzexit = Math.max(tzmin,  tzmax);
+		
+		double tenter = Math.max(txenter, Math.max(tyenter, tzenter));
+		double texit = Math.min(txexit, Math.min(tyexit, tzexit));
+		
+        return texit >= tenter;
 	}
 }
