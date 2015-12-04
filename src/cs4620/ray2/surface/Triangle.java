@@ -140,6 +140,7 @@ public class Triangle extends Surface {
 		Vector3d v0 = owner.getPosition(index.x).clone();
 		Vector3d v1 = owner.getPosition(index.y).clone();
 		Vector3d v2 = owner.getPosition(index.z).clone();
+		
 		tMat.mulPos(v1);
 		tMat.mulPos(v0);
 		tMat.mulPos(v2);
@@ -158,10 +159,10 @@ public class Triangle extends Surface {
 		double maxZ = Math.max(v0.z, Math.max(v1.z, v2.z));
 		
 		minBound = new Vector3d(minX, minY, minZ);
-		maxBound = new Vector3d(maxX, maxY, maxZ);
+		maxBound = new Vector3d(maxX, maxY, maxZ); 
         
 	}
-
+	
 	/**
 	 * @see Object#toString()
 	 */

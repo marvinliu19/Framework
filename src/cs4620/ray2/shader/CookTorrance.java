@@ -7,6 +7,7 @@ import cs4620.ray2.Scene;
 import egl.math.Color;
 import egl.math.Colord;
 import egl.math.Vector3d;
+import java.util.*;
 
 public class CookTorrance extends Shader {
 
@@ -49,14 +50,53 @@ public class CookTorrance extends Shader {
 	@Override
 	public void shade(Colord outIntensity, Scene scene, Ray ray, IntersectionRecord record, int depth) {
 		// TODO#A7 Fill in this function.
-		// 1) Loop through each light in the scene.
-		// 2) If the intersection point is shadowed, skip the calculation for the light.
-		//	  See Shader.java for a useful shadowing function.
-		// 3) Compute the incoming direction by subtracting
-		//    the intersection point from the light's position.
-		// 4) Compute the color of the point using the CookTorrance shading model. Add this value
-		//    to the output.
-	
+		// create the outgoing ray from where the incoming ray hits the surface
+		Vector3d v = ray.origin.clone().sub(record.location).normalize();			// outgoing ray "viewing ray"
+		Vector3d l = new Vector3d();												// incoming ray
+		
+		outIntensity.setZero();
+
+    	// 1) Loop through each light in the scene.
+        for (Light light : scene.getLights()) {
+        	// 2) If the intersection point is shadowed, skip the calculation for the light.
+    		//	  See Shader.java for a useful shadowing function.
+        	if (!isShadowed(scene, light, record, new Ray())) {
+        		// 3) Compute the incoming direction by subtracting the intersection point from the light's position.
+        		l.set(light.getDirection(record.location)).normalize();
+        		Vector3d h = l.add(v).normalize();
+        		
+        		// 4) Compute the color of the point using the CookTorrance shading model. Add this value to the output.
+        		// Fresnel:
+        		double F = fresnel(record.normal, v, depth);
+        		double r2 = light.getRSq(record.location);
+        		
+        		// Microfacet Distribution
+        		double m2 = Math.pow(roughness, 2);
+        		double nh = record.normal.dot(h);
+        		double expFrac = (Math.pow(nh, 2) - 1)/(m2 * Math.pow(nh, 2));
+        		double D = 1/(m2 * Math.pow(nh, 4)) * Math.exp(expFrac);
+        		
+        		// Geometric Attenuation
+        		double nv = record.normal.dot(v);
+        		double nl = record.normal.dot(l);
+        		double vh = v.dot(h);
+        		double G = Math.min(1., Math.min((2.*nh*nv)/vh, (2.*nh*nl)/vh));
+        		
+        		// Putting it all together
+        		Colord ks = specularColor;
+        		Colord kd = diffuseColor;
+        	
+				double stuff = (F/Math.PI) * ((G * D)/(nv * nl));
+				Vector3d stuff2 = ks.mul(stuff).add(kd).mul(Math.max(nl, 0.0)).mul(light.intensity.div(r2));
+
+				Colord out = new Colord();					// our output colour calculations
+				out.set(stuff2);
+
+        		outIntensity.add(out);
+        	
+        				
+        	}
+        }
         
     }
 }

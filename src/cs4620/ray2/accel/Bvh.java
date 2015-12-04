@@ -52,8 +52,7 @@ public class Bvh implements AccelStruct {
 	 * @param anyIntersection if true, will immediately return when found an intersection
 	 * @return true if an intersection is found with any surface under the given node
 	 */
-	private boolean intersectHelper(BvhNode node, IntersectionRecord outRecord, Ray rayIn, boolean anyIntersection)
-	{
+	private boolean intersectHelper(BvhNode node, IntersectionRecord outRecord, Ray rayIn, boolean anyIntersection) {	
 		// TODO#A7: fill in this function.
 		// Hint: For a leaf node, use a normal linear search. Otherwise, search in the left and right children.
 		// Another hint: save time by checking if the ray intersects the node first before checking the childrens.
@@ -96,11 +95,9 @@ public class Bvh implements AccelStruct {
 				r.end = rec.t;
 				outRecord.set(rec);
 			}
-			//if (node.child[0] != null) intersectHelper(node.child[0], rec, r, anyIntersection);
-			//if (node.child[1] != null) intersectHelper(node.child[1], rec, r, anyIntersection);
 		}
 		
-        return hit;
+        return hit; 
 	}
 
 
@@ -146,7 +143,7 @@ public class Bvh implements AccelStruct {
 		// ==== Step 2 ====
 		// Check for the base case. 
 		// If the range [start, end) is small enough (e.g. less than or equal to 10), just return a new leaf node.
-		if (end - start <= 10)  return new BvhNode(minBound, maxBound, null, null, start, end);
+		if ((end - start) <= 10)  return new BvhNode(minBound, maxBound, null, null, start, end);
 
 		// ==== Step 3 ====
 		// Figure out the widest dimension (x or y or z).
@@ -169,7 +166,7 @@ public class Bvh implements AccelStruct {
 		// ==== Step 4 ====
 		// Sort surfaces according to the widest dimension.
 		cmp.setIndex(widestDim);		// set our comparator's compare function
-		Arrays.sort(surfaces, cmp);		// sort our surfaces array by our comparator
+		Arrays.sort(surfaces, start, end, cmp); // sort our surfaces array by our comparator
 
 		// ==== Step 5 ====
 		// Recursively create left and right children.
