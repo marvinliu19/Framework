@@ -57,6 +57,7 @@ public class Bvh implements AccelStruct {
 		// Hint: For a leaf node, use a normal linear search. Otherwise, search in the left and right children.
 		// Another hint: save time by checking if the ray intersects the node first before checking the childrens.
 		Ray r = new Ray(rayIn);
+
 		IntersectionRecord rec = new IntersectionRecord();
 		boolean hit = false;
 		
@@ -67,12 +68,12 @@ public class Bvh implements AccelStruct {
 			for (int i = node.surfaceIndexStart; i < node.surfaceIndexEnd; i++) {
 				if (surfaces[i].intersect(rec, r)) {
 					// if we enter this section, then we indeed have an intersection with the i'th surface
-					if (anyIntersection) return true;
-					hit = true;
 					if (rec.t < r.end) {
+						if (anyIntersection) return true;
+						hit = true;
 						// update the end of our ray to be the first intersection
 						r.end = rec.t;
-						outRecord.set(rec);		// update the output intersection record
+						if (outRecord != null) outRecord.set(rec);		// update the output intersection record
 					}
 				}
 			}
@@ -85,7 +86,7 @@ public class Bvh implements AccelStruct {
 				if (anyIntersection) return true;		// if any OK, then let's just return true immediately
 				hit = true;								// otherwise, signal that we found something
 				r.end = rec.t;							
-				outRecord.set(rec);
+				if (outRecord != null) outRecord.set(rec);
 			}
 	
 			if (intersectHelper(node.child[1], rec, r, anyIntersection)) {
@@ -93,7 +94,7 @@ public class Bvh implements AccelStruct {
 				if (anyIntersection) return true;
 				hit = true;
 				r.end = rec.t;
-				outRecord.set(rec);
+				if (outRecord != null) outRecord.set(rec);
 			}
 		}
 		

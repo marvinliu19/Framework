@@ -92,9 +92,7 @@ public class CookTorrance extends Shader {
 				Colord out = new Colord();					// our output colour calculations
 				out.set(stuff2);
 
-        		outIntensity.add(out);
-        	
-        				
+        		outIntensity.add(out);			
         	}
         }
         

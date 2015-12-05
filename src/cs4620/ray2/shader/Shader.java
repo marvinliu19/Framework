@@ -69,6 +69,7 @@ public abstract class Shader {
 		double n2 = refractiveIndex;
 		
 		if (normal.dot(outgoing) < 0) {
+			// normal and outgoing in different directions
 			normal.mul(-1.0);
 		}
 		
