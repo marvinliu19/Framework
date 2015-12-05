@@ -61,13 +61,17 @@ public class Cubemap {
 		Vector2d outFace = new Vector2d();
 		int face = dirToFace(dir.clone(), outFace);
 		int loc = faceToIndex(face, outFace);
-		
-		float r = imageData[loc];
-		float g = imageData[loc + 1];
-		float b = imageData[loc + 2];
+	
+
+		float r = imageData[3*loc];
+		float g = imageData[3*loc + 1];
+		float b = imageData[3*loc + 2];
 		
 		Colord out = new Colord(r, g, b);
 		outRadiance.set(out.mul(scaleFactor));
+		
+		
+		
 	}
 
 	protected int dirToFace(Vector3d dir, Vector2d outFaceUV) {

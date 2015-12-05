@@ -53,7 +53,7 @@ public class Glass extends Shader {
 			// points in same direction of normal
 			n1 = refractiveIndex;
 			n2 = 1.0;
-			norm.mul(-1);
+			v.mul(-1);
 			//System.out.println("here");
 		} else {
 			n1 = 1.0;
