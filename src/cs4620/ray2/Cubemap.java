@@ -67,8 +67,7 @@ public class Cubemap {
 		float b = imageData[loc + 2];
 		
 		Colord out = new Colord(r, g, b);
-		outRadiance.set(out);
-		outRadiance.mul(scaleFactor);
+		outRadiance.set(out.mul(scaleFactor));
 	}
 
 	protected int dirToFace(Vector3d dir, Vector2d outFaceUV) {
