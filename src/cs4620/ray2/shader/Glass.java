@@ -44,66 +44,63 @@ public class Glass extends Shader {
 	@Override
 	public void shade(Colord outIntensity, Scene scene, Ray ray, IntersectionRecord record, int depth) {
 		double n1, n2;
+		// v points from the surface to the light source
 		Vector3d v = ray.origin.clone().sub(record.location).normalize();
-		//Vector3d v = ray.direction.normalize();			// outgoing ray 
 		Vector3d norm = record.normal.clone();
-
+		
+		Ray reflected = new Ray();
+		Ray refracted = new Ray();
+		reflected.makeOffsetRay();
+		refracted.makeOffsetRay();
+		
+		double cosTheta1;
+		double sinTheta1;
+		Vector3d reflDir;
+		boolean totalInternal = false;
+		
 		if (v.dot(norm) > 0) {
-			// points in the same direction as the normal
+			// outside
 			n1 = 1.0;
 			n2 = refractiveIndex;
+			cosTheta1 = norm.dot(v);
+			sinTheta1 = Math.sqrt(1 - Math.pow(cosTheta1, 2));
+			
+			reflDir = norm.clone().sub(v).mul(2*v.dot(norm));
+			reflected.set(record.location, reflDir);
+			
+			totalInternal = sinTheta1 > n2; 
 		} else {
+			// inside, pointing in different directions so need to flip normal
 			n1 = refractiveIndex;
 			n2 = 1.0;
-			norm.negate();				// pointing in different directions need to flip normal
+			norm.negate();	
+			cosTheta1 = norm.dot(v);
+			sinTheta1 = Math.sqrt(1 - Math.pow(cosTheta1, 2));
+			
+			reflDir = norm.clone().sub(v).mul(2*v.dot(norm));
+			reflected.set(record.location, reflDir);
+			
+			totalInternal = sinTheta1 * n1 > 1; 
 		}
 		
-		// 2) Determine whether total internal reflection occurs.
-		boolean totalInternal = false;
-		double theta1 = norm.angle(ray.direction);
-		
-		if (n1 > n2) {
-			// https://en.wikipedia.org/wiki/Total_internal_reflection
-			double critical = Math.asin(n2/n1);		// angle of incidence greater, total internal refl occurs
-			if (theta1 > critical) totalInternal = true;
-		} 
-
-        // 3) Compute the reflected ray and refracted ray (if total internal reflection does not occur)
-        //    using Snell's law and call RayTracer.shadeRay on them to shade them
-		outIntensity.setZero();
-		double R = totalInternal ? 1 : fresnelCalc(norm, v, n1, n2);
-
-		//Vector3d reflDir = (norm.clone().sub(v)).mul(2*v.dot(norm));
-		Vector3d reflDir = norm.clone().sub(ray.direction).mul(2*ray.direction.dot(norm));
-				
-		Ray reflected = new Ray();
-		reflected.makeOffsetRay();
-		reflected.set(record.location, reflDir);
-		
-		Colord reflColour = new Colord(reflDir);
-		
-		RayTracer.shadeRay(reflColour, scene,  reflected,  depth+1);
-		reflColour.mul(R);
-		outIntensity.add(reflColour);
-		
-		
-		if (!totalInternal) {
-			// if we don't have total internal reflection, we have to calculate refraction as well
-			Ray refracted = new Ray();
-			refracted.makeOffsetRay();
-			double theta2 = Math.asin((n1/n2)*Math.sin(theta1));
-			double constant = (n1/n2)*Math.cos(theta1) - Math.cos(theta2);
-			Vector3d refrDir = v.clone().mul(n1/n2).add(norm.clone().mul(constant));
-			
-			
+		if (totalInternal) {
+			Colord reflColour = new Colord(reflDir);
+			RayTracer.shadeRay(reflColour, scene,  reflected,  depth+1);
+			outIntensity.add(reflColour);
+		} else {
+			double sinTheta2 = sinTheta1/n2;
+			double cosTheta2 = Math.sqrt(1 - Math.pow(sinTheta2, 2));
+			double R = fresnelCalc(norm, v, n1, n2);
+			Vector3d refrDir = norm.clone().mul((n1/n2)*cosTheta1 - cosTheta2).sub(v.mul(n1/n2));
 			refracted.set(record.location, refrDir);
 			
+			Colord reflColour = new Colord(reflDir);
 			Colord refrColour = new Colord(refrDir);
+			RayTracer.shadeRay(reflColour, scene,  reflected,  depth+1);
 			RayTracer.shadeRay(refrColour, scene, refracted, depth+1);
-			refrColour.mul(1 - R);
-			outIntensity.add(refrColour);
+			
+			outIntensity.setMultiple(R,reflColour).addMultiple(1-R, refrColour);
 		}
-				
 	}
 				
 	protected double fresnelCalc(Vector3d normal, Vector3d outgoing, double n1, double n2) {
