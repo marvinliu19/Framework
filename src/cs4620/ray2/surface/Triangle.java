@@ -12,6 +12,7 @@ import java.util.*;
  *
  * @author ags
  */
+@SuppressWarnings("unused")
 public class Triangle extends Surface {
 	/** The normal vector of this triangle, if vertex normals are not specified */
 	Vector3d norm;
@@ -135,32 +136,39 @@ public class Triangle extends Surface {
 	public void computeBoundingBox() {
 		// TODO#A7: Compute the bounding box and store the result in
 		// averagePosition, minBound, and maxBound.
-
-		// Get three vertices of owning triangle
-		Vector3d v0 = owner.getPosition(index.x).clone();
-		Vector3d v1 = owner.getPosition(index.y).clone();
-		Vector3d v2 = owner.getPosition(index.z).clone();
+		Vector3d v0 = owner.getPosition(index.x);
+		Vector3d v1 = owner.getPosition(index.y);
+		Vector3d v2 = owner.getPosition(index.z);
 		
-		tMat.mulPos(v1);
-		tMat.mulPos(v0);
-		tMat.mulPos(v2);
+		averagePosition = new Vector3d((v0.x + v1.x + v2.x)/3, 
+				(v0.y + v1.y + v2.y)/3, (v0.z + v1.z + v2.z)/3);
+		tMat.mulPos(averagePosition);
 		
-		// Calculate epicenter of triangle
-		averagePosition = new Vector3d((1/3)*(v0.x + v1.x + v2.x), 
-				(1/3)*(v0.y + v1.y + v2.y), (1/3)*(v0.z + v1.z + v2.z));		
+		Vector3d [] points = new Vector3d[]{v0.clone(), v1.clone(), v2.clone()};
 		
-		// Find the max and min bounds of the triangle:
-		double minX = Math.min(v0.x, Math.min(v1.x, v2.x));
-		double minY = Math.min(v0.y, Math.min(v1.y, v2.y));
-		double minZ = Math.min(v0.z, Math.min(v1.z, v2.z));
+		double minX = Double.POSITIVE_INFINITY;
+		double minY = Double.POSITIVE_INFINITY;
+		double minZ = Double.POSITIVE_INFINITY;
 		
-		double maxX = Math.max(v0.x, Math.max(v1.x, v2.x));
-		double maxY = Math.max(v0.y, Math.max(v1.y, v2.y));
-		double maxZ = Math.max(v0.z, Math.max(v1.z, v2.z));
+		double maxX = Double.NEGATIVE_INFINITY;
+		double maxY = Double.NEGATIVE_INFINITY;
+		double maxZ = Double.NEGATIVE_INFINITY;
+		
+		for (int i = 0; i < points.length; i++) {
+			tMat.mulPos(points[i]);
+			
+			minX = points[i].x < minX ? points[i].x : minX;
+			minY = points[i].y < minY ? points[i].y : minY;
+			minZ = points[i].z < minZ ? points[i].z : minZ;
+			
+			maxX = points[i].x > maxX ? points[i].x : maxX;
+			maxY = points[i].y > maxY ? points[i].y : maxY;
+			maxZ = points[i].z > maxZ ? points[i].z : maxZ;
+		}
 		
 		minBound = new Vector3d(minX, minY, minZ);
-		maxBound = new Vector3d(maxX, maxY, maxZ); 
-        
+		maxBound = new Vector3d(maxX, maxY, maxZ);
+		
 	}
 	
 	/**

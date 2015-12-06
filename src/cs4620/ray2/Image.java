@@ -24,6 +24,7 @@ import egl.math.Colord;
  *
  * @author eschweic, nsavva
  */
+@SuppressWarnings("unused")
 public class Image {
 	
 	/** Image width * */
